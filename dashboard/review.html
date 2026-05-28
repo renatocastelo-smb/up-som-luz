@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revisão de Perfis — Inteligência de Mercado</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --accent: #6c63ff;
+    --green: #4caf7d;
+    --red: #ff5252;
+    --yellow: #ffc107;
+    --text: #e8eaf6;
+    --muted: #7b82b0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  header h1 { font-size: 16px; font-weight: 700; }
+  header .back { color: var(--muted); text-decoration: none; font-size: 13px; }
+  header .back:hover { color: var(--text); }
+  .header-right { margin-left: auto; display: flex; gap: 12px; align-items: center; }
+  .progress-text { color: var(--muted); font-size: 12px; }
+
+  .layout { display: flex; min-height: calc(100vh - 57px); }
+
+  /* LEFT: vendor list */
+  .vendor-sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+  }
+
+  .sidebar-title {
+    padding: 12px 16px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .vendor-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background .12s;
+  }
+  .vendor-item:hover { background: var(--surface2); }
+  .vendor-item.active { background: var(--surface2); border-left: 3px solid var(--accent); }
+  .vendor-item.done { opacity: .45; }
+
+  .vendor-item-name { font-size: 13px; font-weight: 500; }
+  .vendor-item-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .status-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+  .dot-pending  { background: var(--yellow); }
+  .dot-done     { background: var(--green); }
+
+  /* RIGHT: candidate review */
+  main {
+    flex: 1;
+    padding: 28px;
+    overflow-y: auto;
+  }
+
+  .empty-state {
+    color: var(--muted);
+    text-align: center;
+    padding: 80px 20px;
+    font-size: 15px;
+  }
+  .empty-state p { margin-top: 8px; font-size: 13px; }
+
+  .vendor-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .vendor-header h2 { font-size: 20px; font-weight: 700; }
+  .category-badge {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: rgba(108,99,255,.2);
+    color: var(--accent);
+  }
+
+  .candidates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .candidate-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    position: relative;
+  }
+  .candidate-card:hover { border-color: var(--accent); background: var(--surface2); }
+  .candidate-card.selected { border-color: var(--green); background: rgba(76,175,125,.07); }
+
+  .confidence-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 12px 12px 0 0;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .confidence-fill { height: 100%; background: var(--accent); }
+  .high .confidence-fill { background: var(--green); }
+  .mid .confidence-fill  { background: var(--yellow); }
+  .low .confidence-fill  { background: var(--muted); }
+
+  .card-handle {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 4px;
+    margin-top: 4px;
+  }
+  .card-name   { font-size: 13px; margin-bottom: 6px; }
+  .card-bio    { font-size: 12px; color: var(--muted); margin-bottom: 8px; min-height: 32px; }
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    margin-top: 4px;
+  }
+  .card-followers { font-size: 12px; color: var(--muted); }
+  .card-link {
+    font-size: 11px;
+    color: var(--accent);
+    text-decoration: none;
+    padding: 3px 8px;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+  }
+  .card-link:hover { background: rgba(108,99,255,.15); }
+
+  .selected-check {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--green);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+  .candidate-card.selected .selected-check { display: flex; }
+
+  .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+  .btn {
+    padding: 9px 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .btn:hover { opacity: .85; }
+  .btn:disabled { opacity: .4; cursor: default; }
+
+  .btn-confirm { background: var(--green);  color: #fff; }
+  .btn-skip    { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+  .no-candidates {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 32px;
+    text-align: center;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--green);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    display: none;
+    z-index: 999;
+    box-shadow: 0 4px 16px rgba(0,0,0,.4);
+  }
+
+  .loading-overlay {
+    color: var(--muted);
+    padding: 60px;
+    text-align: center;
+    font-size: 15px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back" href="/">← Dashboard</a>
+  <h1>Revisão de Perfis de Instagram</h1>
+  <div class="header-right">
+    <span class="progress-text" id="progress-text"></span>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="vendor-sidebar">
+    <div class="sidebar-title">Fornecedores pendentes</div>
+    <div id="vendor-list"></div>
+  </div>
+
+  <main id="main-content">
+    <div class="empty-state">
+      Selecione um fornecedor ao lado para revisar os candidatos.
+      <p>Rode <code>python discover.py</code> primeiro para buscar candidatos.</p>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let vendors = [];
+let currentVendor = null;
+let selectedHandle = null;
+let doneSet = new Set();
+
+async function loadVendors() {
+  const r = await fetch('/api/review/vendors');
+  vendors = await r.json();
+
+  const stats = await (await fetch('/api/review/stats')).json();
+  document.getElementById('progress-text').textContent =
+    `${stats.confirmed} confirmados · ${stats.pending} pendentes`;
+
+  renderSidebar();
+  if (vendors.length > 0) {
+    selectVendor(vendors[0].vendor_name);
+  }
+}
+
+function renderSidebar() {
+  const list = document.getElementById('vendor-list');
+  if (!vendors.length) {
+    list.innerHTML = '<div style="padding:20px;color:var(--muted);font-size:13px">Nenhum pendente.<br>Rode python discover.py primeiro.</div>';
+    return;
+  }
+  list.innerHTML = vendors.map(v => {
+    const done = doneSet.has(v.vendor_name);
+    const active = currentVendor === v.vendor_name ? ' active' : '';
+    const cls = done ? ' done' : '';
+    return `<div class="vendor-item${active}${cls}" onclick="selectVendor('${esc(v.vendor_name)}')">
+      <div class="vendor-item-name">
+        <span class="status-dot ${done ? 'dot-done' : 'dot-pending'}"></span>
+        ${v.vendor_name}
+      </div>
+      <div class="vendor-item-meta">${v.candidate_count} candidato(s) · ${v.vendor_category}</div>
+    </div>`;
+  }).join('');
+}
+
+async function selectVendor(name) {
+  currentVendor = name;
+  selectedHandle = null;
+  renderSidebar();
+
+  const main = document.getElementById('main-content');
+  main.innerHTML = '<div class="loading-overlay">Carregando candidatos…</div>';
+
+  const r = await fetch('/api/review/candidates?vendor=' + encodeURIComponent(name));
+  const candidates = await r.json();
+
+  const vendor = vendors.find(v => v.vendor_name === name);
+  const catLabel = { planner: 'Cerimonial', decorator: 'Decoração', venue: 'Local',
+                     buffet: 'Buffet', competitor: 'Concorrente' };
+
+  let candidateHTML = '';
+  if (!candidates.length) {
+    candidateHTML = `<div class="no-candidates">
+      Nenhum candidato encontrado para este fornecedor.<br>
+      <small>Rode <code>python discover.py --name "${name}"</code> para tentar novamente.</small>
+    </div>`;
+  } else {
+    candidateHTML = `<div class="candidates-grid">` +
+      candidates.map(c => {
+        const conf = c.confidence || 0.5;
+        const tier = conf >= 0.75 ? 'high' : conf >= 0.45 ? 'mid' : 'low';
+        const pct = Math.round(conf * 100);
+        const followers = c.followers ? `${c.followers} seguidores` : '— seguidores';
+        const bio = c.bio || '<em style="opacity:.5">bio não disponível</em>';
+        const displayName = c.display_name || c.handle;
+        return `<div class="candidate-card ${tier}" id="card-${esc(c.handle)}"
+                     onclick="selectCard('${esc(c.handle)}')">
+          <div class="confidence-bar"><div class="confidence-fill" style="width:${pct}%"></div></div>
+          <div class="selected-check">✓</div>
+          <div class="card-handle">${c.handle}</div>
+          <div class="card-name">${displayName}</div>
+          <div class="card-bio">${bio}</div>
+          <div class="card-footer">
+            <span class="card-followers">${followers}</span>
+            <a class="card-link" href="${c.profile_url}" target="_blank">Ver perfil →</a>
+          </div>
+        </div>`;
+      }).join('') +
+    `</div>`;
+  }
+
+  main.innerHTML = `
+    <div class="vendor-header">
+      <h2>${name}</h2>
+      <span class="category-badge">${catLabel[vendor?.vendor_category] || vendor?.vendor_category || ''}</span>
+    </div>
+    ${candidateHTML}
+    <div class="actions">
+      <button class="btn btn-confirm" id="btn-confirm" onclick="confirm()" disabled>
+        Confirmar perfil selecionado
+      </button>
+      <button class="btn btn-skip" onclick="skip()">
+        Nenhum é correto — pular
+      </button>
+    </div>
+  `;
+}
+
+function selectCard(handle) {
+  selectedHandle = handle;
+  document.querySelectorAll('.candidate-card').forEach(el => el.classList.remove('selected'));
+  const card = document.getElementById('card-' + handle);
+  if (card) card.classList.add('selected');
+  document.getElementById('btn-confirm').disabled = false;
+}
+
+async function confirm() {
+  if (!selectedHandle || !currentVendor) return;
+  const btn = document.getElementById('btn-confirm');
+  btn.disabled = true;
+  btn.textContent = 'Salvando…';
+
+  const r = await fetch('/api/review/confirm', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({vendor_name: currentVendor, handle: selectedHandle})
+  });
+
+  if (r.ok) {
+    showToast(`✓ ${selectedHandle} salvo para ${currentVendor}`);
+    doneSet.add(currentVendor);
+    vendors = vendors.filter(v => v.vendor_name !== currentVendor);
+    renderSidebar();
+    if (vendors.length > 0) {
+      selectVendor(vendors[0].vendor_name);
+    } else {
+      document.getElementById('main-content').innerHTML =
+        '<div class="empty-state">Todos os fornecedores foram revisados! 🎉<p>Novos candidatos aparecerão aqui após rodar discover.py.</p></div>';
+    }
+    // Update stats
+    const stats = await (await fetch('/api/review/stats')).json();
+    document.getElementById('progress-text').textContent =
+      `${stats.confirmed} confirmados · ${stats.pending} pendentes`;
+  }
+}
+
+async function skip() {
+  if (!currentVendor) return;
+  await fetch('/api/review/skip', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({vendor_name: currentVendor})
+  });
+  showToast(`Pulado: ${currentVendor}`);
+  vendors = vendors.filter(v => v.vendor_name !== currentVendor);
+  renderSidebar();
+  if (vendors.length > 0) {
+    selectVendor(vendors[0].vendor_name);
+  } else {
+    document.getElementById('main-content').innerHTML =
+      '<div class="empty-state">Todos revisados.</div>';
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2500);
+}
+
+function esc(s) {
+  return (s || '').replace(/'/g, "\\'");
+}
+
+loadVendors();
+</script>
+</body>
+</html>

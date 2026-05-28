@@ -1,0 +1,8 @@
+.env
+*.db
+raw_posts/
+last_run.json
+__pycache__/
+*.pyc
+.venv/
+venv/

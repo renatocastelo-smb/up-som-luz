@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inteligência de Mercado — Eventos</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --text: #e8eaf6;
+    --muted: #7b82b0;
+    --wedding: #ff6584;
+    --graduation: #ffa726;
+    --corporate: #42a5f5;
+    --birthday: #ab47bc;
+    --other: #78909c;
+    --competitor: #ff5252;
+    --venue: #26c6da;
+    --planner: #9ccc65;
+    --decorator: #ef9a9a;
+    --buffet: #ffca28;
+    --photographer: #ce93d8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  header h1 { font-size: 16px; font-weight: 700; letter-spacing: .3px; }
+  header .sub { color: var(--muted); font-size: 12px; }
+
+  .stats-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 24px;
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  .stat { display: flex; flex-direction: column; gap: 1px; }
+  .stat-val { font-size: 20px; font-weight: 700; color: var(--accent); }
+  .stat-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+
+  .layout { display: flex; min-height: calc(100vh - 100px); }
+
+  nav {
+    width: 180px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+  }
+
+  nav a {
+    display: block;
+    padding: 9px 20px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  nav a.active, nav a:hover { background: var(--surface2); color: var(--text); }
+  nav a.active { border-left: 3px solid var(--accent); }
+
+  main { flex: 1; padding: 24px; overflow: auto; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  select, input[type=text] {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+
+  select:focus, input[type=text]:focus {
+    outline: 2px solid var(--accent);
+    border-color: var(--accent);
+  }
+
+  /* Events grid */
+  .events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 14px;
+  }
+
+  .event-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    transition: border-color .15s;
+  }
+
+  .event-card:hover { border-color: var(--accent); }
+
+  .event-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .event-type-badge {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+
+  .badge-wedding   { background: rgba(255,101,132,.2); color: var(--wedding); }
+  .badge-graduation { background: rgba(255,167,38,.2); color: var(--graduation); }
+  .badge-corporate  { background: rgba(66,165,245,.2); color: var(--corporate); }
+  .badge-birthday   { background: rgba(171,71,188,.2); color: var(--birthday); }
+  .badge-other      { background: rgba(120,144,156,.2); color: var(--other); }
+
+  .event-date { font-size: 12px; color: var(--muted); }
+  .event-venue { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+
+  .vendor-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+
+  .chip {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+
+  .chip-venue       { border-color: var(--venue);       color: var(--venue); }
+  .chip-planner     { border-color: var(--planner);     color: var(--planner); }
+  .chip-decorator   { border-color: var(--decorator);   color: var(--decorator); }
+  .chip-buffet      { border-color: var(--buffet);      color: var(--buffet); }
+  .chip-competitor  { border-color: var(--competitor);  color: var(--competitor); }
+  .chip-photographer{ border-color: var(--photographer);color: var(--photographer); }
+  .chip-other       { border-color: var(--muted);       color: var(--muted); }
+
+  /* Network table */
+  .network-table { width: 100%; border-collapse: collapse; }
+  .network-table th, .network-table td {
+    padding: 9px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .network-table th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; }
+  .network-table tr:hover td { background: var(--surface2); }
+
+  .bar {
+    height: 6px;
+    background: var(--accent);
+    border-radius: 3px;
+    min-width: 4px;
+  }
+
+  /* Calendar heatmap */
+  .calendar-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cal-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cal-week { color: var(--muted); font-size: 12px; width: 80px; flex-shrink: 0; }
+
+  .cal-cells { display: flex; gap: 4px; }
+
+  .cal-cell {
+    width: 32px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: default;
+  }
+
+  .cal-cell.empty { background: var(--surface2); color: var(--muted); }
+  .cal-cell.low   { background: rgba(108,99,255,.3); color: var(--accent); }
+  .cal-cell.mid   { background: rgba(108,99,255,.6); color: #fff; }
+  .cal-cell.high  { background: var(--accent); color: #fff; }
+
+  /* Alerts */
+  .alert-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .alert-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+
+  .alert-item.competitor { border-left-color: var(--competitor); }
+
+  .alert-time { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .empty-state {
+    text-align: center;
+    color: var(--muted);
+    padding: 60px 20px;
+    font-size: 15px;
+  }
+
+  .empty-state p { margin-top: 8px; font-size: 13px; }
+
+  .refresh-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    margin-left: auto;
+  }
+
+  .refresh-btn:hover { opacity: .85; }
+
+  .loading { color: var(--muted); padding: 40px; text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Inteligência de Mercado</h1>
+    <div class="sub">Monitoramento de fornecedores de eventos</div>
+  </div>
+  <button class="refresh-btn" onclick="loadAll()">Atualizar</button>
+</header>
+
+<div class="stats-bar" id="stats-bar">
+  <div class="stat"><div class="stat-val" id="s-vendors">—</div><div class="stat-lbl">Fornecedores</div></div>
+  <div class="stat"><div class="stat-val" id="s-events">—</div><div class="stat-lbl">Eventos detectados</div></div>
+  <div class="stat"><div class="stat-val" id="s-today">—</div><div class="stat-lbl">Novos hoje</div></div>
+  <div class="stat"><div class="stat-val" id="s-posts">—</div><div class="stat-lbl">Posts coletados</div></div>
+  <div class="stat"><div class="stat-val" id="s-lastrun">—</div><div class="stat-lbl">Última coleta</div></div>
+</div>
+
+<div class="layout">
+  <nav>
+    <a class="active" data-page="events" onclick="showPage('events',this)">Eventos</a>
+    <a data-page="competitors" onclick="showPage('competitors',this)">Concorrentes</a>
+    <a data-page="network" onclick="showPage('network',this)">Rede de fornecedores</a>
+    <a data-page="calendar" onclick="showPage('calendar',this)">Calendário</a>
+    <a data-page="vendors" onclick="showPage('vendors',this)">Fornecedores</a>
+  </nav>
+
+  <main>
+
+    <!-- EVENTS PAGE -->
+    <div class="page active" id="page-events">
+      <div class="page-title">Eventos recentes</div>
+      <div class="filters">
+        <select id="filter-type" onchange="renderEvents()">
+          <option value="">Todos os tipos</option>
+          <option value="wedding">Casamento</option>
+          <option value="graduation">Formatura</option>
+          <option value="corporate">Corporativo</option>
+          <option value="birthday">Aniversário</option>
+          <option value="other">Outro</option>
+        </select>
+        <input type="text" id="filter-search" placeholder="Buscar por local ou fornecedor…"
+               oninput="renderEvents()">
+      </div>
+      <div class="events-grid" id="events-container">
+        <div class="loading">Carregando…</div>
+      </div>
+    </div>
+
+    <!-- COMPETITORS PAGE -->
+    <div class="page" id="page-competitors">
+      <div class="page-title">Eventos com concorrentes</div>
+      <div class="events-grid" id="competitors-container">
+        <div class="loading">Carregando…</div>
+      </div>
+    </div>
+
+    <!-- NETWORK PAGE -->
+    <div class="page" id="page-network">
+      <div class="page-title">Quem trabalha com quem</div>
+      <div class="filters">
+        <label style="color:var(--muted);font-size:12px">Mínimo de eventos juntos:</label>
+        <input type="text" id="min-co" value="2" style="width:50px"
+               onchange="renderNetwork()">
+      </div>
+      <table class="network-table" id="network-table">
+        <thead>
+          <tr>
+            <th>Fornecedor A</th>
+            <th>Categoria A</th>
+            <th>Fornecedor B</th>
+            <th>Categoria B</th>
+            <th>Eventos juntos</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="network-body"></tbody>
+      </table>
+    </div>
+
+    <!-- CALENDAR PAGE -->
+    <div class="page" id="page-calendar">
+      <div class="page-title">Calendário de eventos</div>
+      <div class="calendar-grid" id="calendar-container">
+        <div class="loading">Carregando…</div>
+      </div>
+    </div>
+
+    <!-- VENDORS PAGE -->
+    <div class="page" id="page-vendors">
+      <div class="page-title">Fornecedores monitorados</div>
+      <table class="network-table">
+        <thead>
+          <tr>
+            <th>Handle</th>
+            <th>Nome</th>
+            <th>Categoria</th>
+            <th>Plataforma</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="vendors-body"></tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<script>
+let allEvents = [];
+let competitorEvents = [];
+let networkData = [];
+let calendarData = [];
+let vendorsList = [];
+
+const TYPE_LABELS = {
+  wedding: 'Casamento', graduation: 'Formatura',
+  corporate: 'Corporativo', birthday: 'Aniversário', other: 'Outro'
+};
+const CAT_LABELS = {
+  venue: 'Local', planner: 'Assessoria', decorator: 'Decoração',
+  buffet: 'Buffet', competitor: 'Concorrente', photographer: 'Foto/Vídeo', other: 'Outro'
+};
+
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+async function loadAll() {
+  await Promise.all([loadStats(), loadEvents(), loadCompetitors(),
+                     loadNetwork(), loadCalendar(), loadVendors()]);
+}
+
+async function loadStats() {
+  try {
+    const r = await fetch('/api/stats');
+    const d = await r.json();
+    document.getElementById('s-vendors').textContent = d.total_vendors ?? '—';
+    document.getElementById('s-events').textContent = d.total_events ?? '—';
+    document.getElementById('s-today').textContent = d.new_today ?? '—';
+    document.getElementById('s-posts').textContent = d.total_posts ?? '—';
+    if (d.last_run && d.last_run.run_at) {
+      const dt = new Date(d.last_run.run_at);
+      document.getElementById('s-lastrun').textContent =
+        dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+    }
+  } catch(e) { console.warn('stats:', e); }
+}
+
+async function loadEvents() {
+  const r = await fetch('/api/events?limit=200');
+  allEvents = await r.json();
+  renderEvents();
+}
+
+async function loadCompetitors() {
+  const r = await fetch('/api/events?category=competitor&limit=200');
+  competitorEvents = await r.json();
+  renderCompetitors();
+}
+
+async function loadNetwork() {
+  const r = await fetch('/api/network?min=2');
+  networkData = await r.json();
+  renderNetwork();
+}
+
+async function loadCalendar() {
+  const r = await fetch('/api/calendar');
+  calendarData = await r.json();
+  renderCalendar();
+}
+
+async function loadVendors() {
+  const r = await fetch('/api/vendors');
+  vendorsList = await r.json();
+  renderVendors();
+}
+
+function badgeClass(type) {
+  return 'badge-' + (type || 'other');
+}
+
+function chipClass(cat) {
+  return 'chip-' + (cat || 'other');
+}
+
+function eventCardHTML(ev) {
+  const typeBadge = ev.event_type
+    ? `<span class="event-type-badge ${badgeClass(ev.event_type)}">${TYPE_LABELS[ev.event_type] || ev.event_type}</span>`
+    : '';
+  const dateStr = ev.event_date
+    ? new Date(ev.event_date + 'T12:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'short',year:'numeric'})
+    : '';
+  const venue = ev.venue_name ? `<div class="event-venue">${ev.venue_name}</div>` : '';
+  const chips = (ev.vendors || []).map(v =>
+    `<span class="chip ${chipClass(v.category)}" title="${v.name}">${v.handle}</span>`
+  ).join('');
+
+  return `<div class="event-card">
+    <div class="event-header">
+      ${typeBadge}
+      <span class="event-date">${dateStr}</span>
+    </div>
+    ${venue}
+    <div class="vendor-chips">${chips || '<span style="color:var(--muted);font-size:12px">sem fornecedores linkados</span>'}</div>
+  </div>`;
+}
+
+function renderEvents() {
+  const typeFilter = document.getElementById('filter-type').value;
+  const search = document.getElementById('filter-search').value.toLowerCase();
+
+  let filtered = allEvents;
+  if (typeFilter) filtered = filtered.filter(e => e.event_type === typeFilter);
+  if (search) {
+    filtered = filtered.filter(e =>
+      (e.venue_name || '').toLowerCase().includes(search) ||
+      (e.vendors || []).some(v => v.handle.toLowerCase().includes(search) || v.name.toLowerCase().includes(search))
+    );
+  }
+
+  const container = document.getElementById('events-container');
+  if (!filtered.length) {
+    container.innerHTML = '<div class="empty-state">Nenhum evento encontrado.<p>Rode o scraper e o extractor para preencher a base.</p></div>';
+    return;
+  }
+  container.innerHTML = filtered.map(eventCardHTML).join('');
+}
+
+function renderCompetitors() {
+  const container = document.getElementById('competitors-container');
+  if (!competitorEvents.length) {
+    container.innerHTML = '<div class="empty-state">Nenhum evento com concorrentes detectado ainda.</div>';
+    return;
+  }
+  container.innerHTML = competitorEvents.map(eventCardHTML).join('');
+}
+
+function renderNetwork() {
+  const minCo = parseInt(document.getElementById('min-co').value) || 2;
+  const data = networkData.filter(p => p.cooccurrences >= minCo);
+  const maxCo = data.length ? Math.max(...data.map(p => p.cooccurrences)) : 1;
+  const body = document.getElementById('network-body');
+  if (!data.length) {
+    body.innerHTML = `<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:40px">
+      Nenhum par encontrado com mínimo de ${minCo} eventos juntos.</td></tr>`;
+    return;
+  }
+  body.innerHTML = data.map(p => `
+    <tr>
+      <td>${p.name_a}<br><small style="color:var(--muted)">${p.handle_a}</small></td>
+      <td><span class="chip ${chipClass(p.cat_a)}">${CAT_LABELS[p.cat_a]||p.cat_a}</span></td>
+      <td>${p.name_b}<br><small style="color:var(--muted)">${p.handle_b}</small></td>
+      <td><span class="chip ${chipClass(p.cat_b)}">${CAT_LABELS[p.cat_b]||p.cat_b}</span></td>
+      <td style="font-weight:700">${p.cooccurrences}</td>
+      <td><div class="bar" style="width:${Math.round(p.cooccurrences/maxCo*120)}px"></div></td>
+    </tr>
+  `).join('');
+}
+
+function renderCalendar() {
+  const container = document.getElementById('calendar-container');
+  if (!calendarData.length) {
+    container.innerHTML = '<div class="empty-state">Sem dados de calendário ainda.</div>';
+    return;
+  }
+
+  const byWeek = {};
+  let maxCnt = 1;
+  calendarData.forEach(row => {
+    if (!byWeek[row.week]) byWeek[row.week] = {};
+    byWeek[row.week][row.event_type] = (byWeek[row.week][row.event_type] || 0) + row.cnt;
+    const total = Object.values(byWeek[row.week]).reduce((a,b) => a+b, 0);
+    if (total > maxCnt) maxCnt = total;
+  });
+
+  const weeks = Object.keys(byWeek).sort().reverse().slice(0, 26);
+  const types = ['wedding','graduation','corporate','birthday','other'];
+
+  container.innerHTML = weeks.map(week => {
+    const data = byWeek[week];
+    const total = Object.values(data).reduce((a,b) => a+b, 0);
+    const cells = types.map(t => {
+      const cnt = data[t] || 0;
+      const cls = cnt === 0 ? 'empty' : total <= 2 ? 'low' : total <= 5 ? 'mid' : 'high';
+      return `<div class="cal-cell ${cls}" title="${TYPE_LABELS[t]||t}: ${cnt}">${cnt||''}</div>`;
+    }).join('');
+    return `<div class="cal-row">
+      <div class="cal-week">${week}</div>
+      <div class="cal-cells">${cells}</div>
+      <div style="color:var(--muted);font-size:12px;margin-left:4px">${total} evento${total!==1?'s':''}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderVendors() {
+  const body = document.getElementById('vendors-body');
+  if (!vendorsList.length) {
+    body.innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:40px">Nenhum fornecedor cadastrado.</td></tr>';
+    return;
+  }
+  body.innerHTML = vendorsList.map(v => `
+    <tr>
+      <td><a href="https://instagram.com/${v.handle.replace('@','')}" target="_blank"
+             style="color:var(--accent);text-decoration:none">${v.handle}</a></td>
+      <td>${v.name}</td>
+      <td><span class="chip ${chipClass(v.category)}">${CAT_LABELS[v.category]||v.category}</span></td>
+      <td style="color:var(--muted)">${v.platform}</td>
+      <td style="color:${v.active?'var(--planner)':'var(--muted)'}">${v.active?'Ativo':'Inativo'}</td>
+    </tr>
+  `).join('');
+}
+
+loadAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+[
+  {"handle": "@formatoproducoes",     "platform": "instagram", "category": "planner",   "name": "Formato Produções",        "active": true, "notes": "Contato: Juliana Freitas"},
+  {"handle": "@cerimonial_lacita",    "platform": "instagram", "category": "planner",   "name": "La Cita Cerimonial",       "active": true, "notes": "Contato: Luiza Dellareti"},
+  {"handle": "@benditocerimonial",    "platform": "instagram", "category": "planner",   "name": "Bendito Cerimonial",       "active": true, "notes": "Contato: Ligia"},
+  {"handle": "@cerimonial_speciali",  "platform": "instagram", "category": "planner",   "name": "Speciali Cerimonial",      "active": true, "notes": "Contato: Patricia Campolina"},
+  {"handle": "@vdesigneventos",       "platform": "instagram", "category": "decorator", "name": "VDesign Eventos",          "active": true, "notes": "Contato: Valter"},
+  {"handle": "@flornolacodecor",      "platform": "instagram", "category": "decorator", "name": "Flor no Laço Decor",       "active": true, "notes": "Contato: Bruna Motta"},
+  {"handle": "@bor.duo",              "platform": "instagram", "category": "decorator", "name": "Borduô",                   "active": true, "notes": "Contato: Bruna e Sabrina"},
+  {"handle": "@lipianidesign",        "platform": "instagram", "category": "decorator", "name": "Lipiani Design",           "active": true, "notes": "Contato: Mônica e Luiza"},
+  {"handle": "@mateusmayrinkconceito","platform": "instagram", "category": "decorator", "name": "Mateus Mayrink Conceito",  "active": true, "notes": ""},
+  {"handle": "@ramoonmmendanha",      "platform": "instagram", "category": "decorator", "name": "Ràmon Mendânha Decoração", "active": true, "notes": ""},
+  {"handle": "@trdesign___",          "platform": "instagram", "category": "decorator", "name": "TR Design",                "active": true, "notes": "Contato: Thon Reis"}
+]
