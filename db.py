@@ -1,6 +1,7 @@
 """SQLite database layer for market intelligence."""
 
 import sqlite3
+from typing import Optional
 import json
 from pathlib import Path
 
@@ -100,7 +101,7 @@ def upsert_vendor(handle: str, platform: str, category: str, name: str,
 
 
 def insert_post(vendor_id: int, shortcode: str, caption: str, posted_at: str,
-                likes: int, tagged_handles: list, media_url: str, raw_path: str) -> int | None:
+                likes: int, tagged_handles: list, media_url: str, raw_path: str) -> Optional[int]:
     try:
         with get_conn() as conn:
             conn.execute("""
@@ -137,8 +138,8 @@ def mark_post_processed(post_id: int):
         conn.execute("UPDATE posts SET processed=1 WHERE id=?", (post_id,))
 
 
-def insert_event(event_type: str | None, event_date: str | None,
-                 venue_name: str | None, confidence: float = 1.0) -> int:
+def insert_event(event_type: Optional[str], event_date: Optional[str],
+                 venue_name: Optional[str], confidence: float = 1.0) -> int:
     with get_conn() as conn:
         cursor = conn.execute("""
             INSERT INTO events (event_type, event_date, venue_name, confidence)
@@ -155,7 +156,7 @@ def link_event_vendor(event_id: int, vendor_id: int, post_id: int):
         """, (event_id, vendor_id, post_id))
 
 
-def get_vendor_id_by_handle(handle: str) -> int | None:
+def get_vendor_id_by_handle(handle: str) -> Optional[int]:
     with get_conn() as conn:
         row = conn.execute(
             "SELECT id FROM vendors WHERE handle=?", (handle,)
@@ -163,8 +164,8 @@ def get_vendor_id_by_handle(handle: str) -> int | None:
         return row["id"] if row else None
 
 
-def get_events_with_vendors(limit: int = 100, event_type: str | None = None,
-                            category_filter: str | None = None) -> list[dict]:
+def get_events_with_vendors(limit: int = 100, event_type: Optional[str] = None,
+                            category_filter: Optional[str] = None) -> list[dict]:
     with get_conn() as conn:
         where_clauses = []
         params: list = []

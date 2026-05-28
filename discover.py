@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 
 import requests
 import anthropic
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 from dotenv import load_dotenv
 
 import db
@@ -54,7 +54,8 @@ def extract_ig_handles_from_results(results: list[dict]) -> list[str]:
     for r in results:
         url = r.get("href", "")
         body = r.get("body", "")
-        for text in [url, body]:
+        title = r.get("title", "") or ""
+        for text in [url, body, title]:
             for m in re.finditer(r'instagram\.com/([A-Za-z0-9_.]{2,30})(?:/|$|\s|")', text):
                 candidate = m.group(1)
                 # Skip known non-profile paths
@@ -62,6 +63,30 @@ def extract_ig_handles_from_results(results: list[dict]) -> list[str]:
                                  "tv", "reels", "share", "s", "direct"):
                     continue
                 handle = "@" + candidate
+                if handle not in seen:
+                    seen.add(handle)
+                    handles.append(handle)
+        # Extract @handle from Instagram-style titles
+        if "Instagram" in title:
+            m = re.search(r"\(@([A-Za-z0-9_.]{2,30})\)", title)
+            if m:
+                handle = "@" + m.group(1)
+                if handle not in seen:
+                    seen.add(handle)
+                    handles.append(handle)
+        # Extract @handle from Instagram-style titles
+        if "Instagram" in title:
+            m = re.search(r"\(@([A-Za-z0-9_.]{2,30})\)", title)
+            if m:
+                handle = "@" + m.group(1)
+                if handle not in seen:
+                    seen.add(handle)
+                    handles.append(handle)
+        # Extract @handle from Instagram-style titles
+        if "Instagram" in title:
+            m = re.search(r"\(@([A-Za-z0-9_.]{2,30})\)", title)
+            if m:
+                handle = "@" + m.group(1)
                 if handle not in seen:
                     seen.add(handle)
                     handles.append(handle)
@@ -74,7 +99,7 @@ def search_ddg(vendor_name: str) -> list[str]:
         f'{vendor_name} instagram site:instagram.com',
     ]
     all_results = []
-    with DDGS() as ddgs:
+    with DDGS(verify=False) as ddgs:
         for q in queries:
             try:
                 results = list(ddgs.text(q, max_results=8))
