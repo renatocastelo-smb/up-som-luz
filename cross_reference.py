@@ -4,44 +4,43 @@ the same real-world event (same venue + date within ±3 days).
 Run: python cross_reference.py
 """
 
-import sqlite3
 import logging
-from datetime import date, timedelta
+from datetime import date
 
 import db
 
 log = logging.getLogger(__name__)
 
 
-def _parse_date(s: str | None) -> date | None:
+def _parse_date(s) -> date | None:
     if not s:
         return None
     try:
-        return date.fromisoformat(s)
+        if isinstance(s, date):
+            return s
+        return date.fromisoformat(str(s)[:10])
     except ValueError:
         return None
 
 
-def _normalize(s: str | None) -> str:
+def _normalize(s) -> str:
     if not s:
         return ""
-    return s.lower().strip().replace("  ", " ")
+    return str(s).lower().strip().replace("  ", " ")
 
 
-def merge_duplicate_events():
+def merge_duplicate_events() -> int:
     """
-    Find events with the same (or very similar) venue_name and dates within 3 days
-    and merge the smaller event_id into the larger one (keep higher id as canonical).
+    Find events with the same venue_name and dates within 3 days,
+    then merge the smaller event_id into the larger (keep higher id as canonical).
     Returns number of merges performed.
     """
-    conn = db.get_conn()
-    events = conn.execute(
-        "SELECT id, event_date, venue_name FROM events ORDER BY id"
-    ).fetchall()
-    conn.close()
+    with db.get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, event_date, venue_name FROM events ORDER BY id")
+            events = [dict(r) for r in cur.fetchall()]
 
-    events = [dict(e) for e in events]
-    merged: dict[int, int] = {}  # old_id -> canonical_id
+    merged: dict[int, int] = {}
 
     def canonical(eid: int) -> int:
         while eid in merged:
@@ -73,12 +72,7 @@ def merge_duplicate_events():
             if date_a and date_b:
                 if abs((date_a - date_b).days) > 3:
                     continue
-            elif date_a or date_b:
-                # One has a date and the other doesn't — still likely the same event
-                # if venue matches exactly
-                pass
 
-            # Merge ev_b into ev_a
             _do_merge(can_a, can_b)
             merged[can_b] = can_a
             merge_count += 1
@@ -90,22 +84,19 @@ def merge_duplicate_events():
 
 def _do_merge(keep_id: int, discard_id: int):
     with db.get_conn() as conn:
-        # Re-point event_vendors links from discarded event to kept event
-        conn.execute("""
-            UPDATE OR IGNORE event_vendors
-            SET event_id = ?
-            WHERE event_id = ?
-        """, (keep_id, discard_id))
-        # Delete any duplicate rows that now have the same (event_id, vendor_id, post_id)
-        conn.execute("""
-            DELETE FROM event_vendors
-            WHERE event_id = ? AND rowid NOT IN (
-                SELECT MIN(rowid) FROM event_vendors
-                WHERE event_id = ?
-                GROUP BY vendor_id, post_id
-            )
-        """, (discard_id, discard_id))
-        conn.execute("DELETE FROM events WHERE id = ?", (discard_id,))
+        with conn.cursor() as cur:
+            # Re-point links from discarded event to kept, skipping PK conflicts
+            cur.execute("""
+                UPDATE event_vendors
+                SET event_id = %s
+                WHERE event_id = %s
+                  AND (vendor_id, post_id) NOT IN (
+                      SELECT vendor_id, post_id FROM event_vendors WHERE event_id = %s
+                  )
+            """, (keep_id, discard_id, keep_id))
+            cur.execute("DELETE FROM event_vendors WHERE event_id = %s", (discard_id,))
+            cur.execute("DELETE FROM events WHERE id = %s", (discard_id,))
+        conn.commit()
 
 
 if __name__ == "__main__":

@@ -364,15 +364,126 @@
 
     <!-- VENDORS PAGE -->
     <div class="page" id="page-vendors">
-      <div class="page-title">Fornecedores monitorados</div>
+      <div class="page-title">
+        Fornecedores monitorados
+        <button class="refresh-btn" onclick="openAddVendor()" style="font-size:13px;padding:6px 14px;margin-left:8px">+ Adicionar</button>
+        <a href="/review" style="margin-left:8px;font-size:13px;color:var(--accent);text-decoration:none;padding:6px 14px;border:1px solid var(--accent);border-radius:6px">Revisar candidatos →</a>
+      </div>
+
+      <!-- Add vendor modal -->
+      <div id="add-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;width:400px;max-width:95vw">
+          <div style="font-size:16px;font-weight:700;margin-bottom:18px">Adicionar fornecedor</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <label style="font-size:12px;color:var(--muted)">Handle do Instagram
+              <input type="text" id="add-handle" placeholder="@exemplo" style="width:100%;margin-top:4px">
+            </label>
+            <label style="font-size:12px;color:var(--muted)">Nome
+              <input type="text" id="add-name" placeholder="Nome do fornecedor" style="width:100%;margin-top:4px">
+            </label>
+            <label style="font-size:12px;color:var(--muted)">Categoria
+              <select id="add-category" style="width:100%;margin-top:4px">
+                <option value="planner">Assessoria/Cerimonial</option>
+                <option value="decorator">Decoração</option>
+                <option value="venue">Local/Espaço</option>
+                <option value="buffet">Buffet</option>
+                <option value="photographer">Foto/Vídeo</option>
+                <option value="competitor">Concorrente</option>
+                <option value="other">Outro</option>
+              </select>
+            </label>
+            <label style="font-size:12px;color:var(--muted)">Prioridade
+              <select id="add-tier" style="width:100%;margin-top:4px">
+                <option value="A">A — Principal</option>
+                <option value="B">B — Secundário</option>
+              </select>
+            </label>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:20px">
+            <button class="refresh-btn" onclick="submitAddVendor()" style="flex:1">Salvar</button>
+            <button onclick="document.getElementById('add-modal').style.display='none'"
+              style="flex:1;padding:8px;border-radius:6px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);cursor:pointer">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit vendor modal -->
+      <div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;width:400px;max-width:95vw">
+          <div style="font-size:16px;font-weight:700;margin-bottom:18px">Editar fornecedor</div>
+          <input type="hidden" id="edit-id">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <label style="font-size:12px;color:var(--muted)">Handle
+              <div id="edit-handle" style="margin-top:4px;padding:6px 10px;background:var(--surface2);border-radius:6px;color:var(--muted)"></div>
+            </label>
+            <label style="font-size:12px;color:var(--muted)">Nome
+              <input type="text" id="edit-name" style="width:100%;margin-top:4px">
+            </label>
+            <label style="font-size:12px;color:var(--muted)">Categoria
+              <select id="edit-category" style="width:100%;margin-top:4px">
+                <option value="planner">Assessoria/Cerimonial</option>
+                <option value="decorator">Decoração</option>
+                <option value="venue">Local/Espaço</option>
+                <option value="buffet">Buffet</option>
+                <option value="photographer">Foto/Vídeo</option>
+                <option value="competitor">Concorrente</option>
+                <option value="other">Outro</option>
+              </select>
+            </label>
+            <label style="font-size:12px;color:var(--muted)">Prioridade
+              <select id="edit-tier" style="width:100%;margin-top:4px">
+                <option value="A">A — Principal</option>
+                <option value="B">B — Secundário</option>
+              </select>
+            </label>
+            <label style="font-size:12px;color:var(--muted)">Notas
+              <input type="text" id="edit-notes" placeholder="Opcional" style="width:100%;margin-top:4px">
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="edit-active" style="width:16px;height:16px">
+              Ativo (monitorar este fornecedor)
+            </label>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:20px">
+            <button class="refresh-btn" onclick="submitEditVendor()" style="flex:1">Salvar</button>
+            <button onclick="document.getElementById('edit-modal').style.display='none'"
+              style="flex:1;padding:8px;border-radius:6px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);cursor:pointer">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="filters" style="margin-top:12px">
+        <select id="vendor-filter-tier" onchange="renderVendors()">
+          <option value="">Todos os tiers</option>
+          <option value="A">Tier A (Principal)</option>
+          <option value="B">Tier B (Secundário)</option>
+        </select>
+        <select id="vendor-filter-cat" onchange="renderVendors()">
+          <option value="">Todas as categorias</option>
+          <option value="planner">Assessoria</option>
+          <option value="decorator">Decoração</option>
+          <option value="venue">Local</option>
+          <option value="buffet">Buffet</option>
+          <option value="photographer">Foto/Vídeo</option>
+          <option value="competitor">Concorrente</option>
+          <option value="other">Outro</option>
+        </select>
+        <input type="text" id="vendor-search" placeholder="Buscar…" oninput="renderVendors()">
+      </div>
+
       <table class="network-table">
         <thead>
           <tr>
             <th>Handle</th>
             <th>Nome</th>
             <th>Categoria</th>
-            <th>Plataforma</th>
+            <th>Tier</th>
             <th>Status</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="vendors-body"></tbody>
@@ -575,20 +686,89 @@ function renderCalendar() {
 
 function renderVendors() {
   const body = document.getElementById('vendors-body');
-  if (!vendorsList.length) {
-    body.innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:40px">Nenhum fornecedor cadastrado.</td></tr>';
+  const tierFilter = document.getElementById('vendor-filter-tier').value;
+  const catFilter  = document.getElementById('vendor-filter-cat').value;
+  const search     = (document.getElementById('vendor-search').value || '').toLowerCase();
+
+  let list = vendorsList;
+  if (tierFilter) list = list.filter(v => v.tier === tierFilter);
+  if (catFilter)  list = list.filter(v => v.category === catFilter);
+  if (search) list = list.filter(v =>
+    v.handle.toLowerCase().includes(search) || v.name.toLowerCase().includes(search)
+  );
+
+  if (!list.length) {
+    body.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:40px">Nenhum fornecedor encontrado.</td></tr>';
     return;
   }
-  body.innerHTML = vendorsList.map(v => `
-    <tr>
+  body.innerHTML = list.map(v => {
+    const tierColor = v.tier === 'A' ? 'var(--green)' : 'var(--blue)';
+    return `<tr>
       <td><a href="https://instagram.com/${v.handle.replace('@','')}" target="_blank"
              style="color:var(--accent);text-decoration:none">${v.handle}</a></td>
       <td>${v.name}</td>
       <td><span class="chip ${chipClass(v.category)}">${CAT_LABELS[v.category]||v.category}</span></td>
-      <td style="color:var(--muted)">${v.platform}</td>
+      <td style="color:${tierColor};font-weight:700">${v.tier}</td>
       <td style="color:${v.active?'var(--planner)':'var(--muted)'}">${v.active?'Ativo':'Inativo'}</td>
-    </tr>
-  `).join('');
+      <td><button onclick='openEditVendor(${JSON.stringify(v)})'
+            style="font-size:11px;padding:3px 10px;border-radius:5px;background:var(--surface2);
+                   color:var(--muted);border:1px solid var(--border);cursor:pointer">
+          Editar
+        </button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openAddVendor() {
+  document.getElementById('add-handle').value = '';
+  document.getElementById('add-name').value = '';
+  document.getElementById('add-category').value = 'planner';
+  document.getElementById('add-tier').value = 'A';
+  document.getElementById('add-modal').style.display = 'flex';
+}
+
+async function submitAddVendor() {
+  const handle   = document.getElementById('add-handle').value.trim();
+  const name     = document.getElementById('add-name').value.trim();
+  const category = document.getElementById('add-category').value;
+  const tier     = document.getElementById('add-tier').value;
+  if (!handle || !name) { alert('Handle e nome são obrigatórios.'); return; }
+  const r = await fetch('/api/vendors/add', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ handle, name, category, tier, platform: 'instagram' })
+  });
+  if (r.ok) {
+    document.getElementById('add-modal').style.display = 'none';
+    await loadVendors();
+  }
+}
+
+function openEditVendor(v) {
+  document.getElementById('edit-id').value       = v.id;
+  document.getElementById('edit-handle').textContent = v.handle;
+  document.getElementById('edit-name').value     = v.name;
+  document.getElementById('edit-category').value = v.category;
+  document.getElementById('edit-tier').value     = v.tier || 'A';
+  document.getElementById('edit-notes').value    = v.notes || '';
+  document.getElementById('edit-active').checked = v.active;
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+
+async function submitEditVendor() {
+  const id       = document.getElementById('edit-id').value;
+  const name     = document.getElementById('edit-name').value.trim();
+  const category = document.getElementById('edit-category').value;
+  const tier     = document.getElementById('edit-tier').value;
+  const notes    = document.getElementById('edit-notes').value.trim();
+  const active   = document.getElementById('edit-active').checked;
+  await fetch('/api/vendors/update', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ id, name, category, tier, notes, active })
+  });
+  document.getElementById('edit-modal').style.display = 'none';
+  await loadVendors();
 }
 
 loadAll();

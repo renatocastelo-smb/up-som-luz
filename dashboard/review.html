@@ -12,6 +12,7 @@
     --border: #2e3250;
     --accent: #6c63ff;
     --green: #4caf7d;
+    --blue: #42a5f5;
     --red: #ff5252;
     --yellow: #ffc107;
     --text: #e8eaf6;
@@ -42,7 +43,6 @@
 
   .layout { display: flex; min-height: calc(100vh - 57px); }
 
-  /* LEFT: vendor list */
   .vendor-sidebar {
     width: 240px;
     flex-shrink: 0;
@@ -80,10 +80,9 @@
     margin-right: 5px;
     vertical-align: middle;
   }
-  .dot-pending  { background: var(--yellow); }
-  .dot-done     { background: var(--green); }
+  .dot-pending { background: var(--yellow); }
+  .dot-done   { background: var(--green); }
 
-  /* RIGHT: candidate review */
   main {
     flex: 1;
     padding: 28px;
@@ -102,7 +101,7 @@
     display: flex;
     align-items: baseline;
     gap: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 8px;
   }
   .vendor-header h2 { font-size: 20px; font-weight: 700; }
   .category-badge {
@@ -116,11 +115,24 @@
     color: var(--accent);
   }
 
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    color: var(--muted);
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 3px;
+  }
+
   .candidates-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 14px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
   }
 
   .candidate-card {
@@ -128,12 +140,12 @@
     border: 2px solid var(--border);
     border-radius: 12px;
     padding: 16px;
-    cursor: pointer;
-    transition: border-color .15s, background .15s;
     position: relative;
+    transition: border-color .15s;
   }
-  .candidate-card:hover { border-color: var(--accent); background: var(--surface2); }
-  .candidate-card.selected { border-color: var(--green); background: rgba(76,175,125,.07); }
+  .candidate-card.done-a { border-color: var(--green); opacity: .5; }
+  .candidate-card.done-b { border-color: var(--blue); opacity: .5; }
+  .candidate-card.done-x { opacity: .3; }
 
   .confidence-bar {
     position: absolute;
@@ -155,8 +167,8 @@
     margin-bottom: 4px;
     margin-top: 4px;
   }
-  .card-name   { font-size: 13px; margin-bottom: 6px; }
-  .card-bio    { font-size: 12px; color: var(--muted); margin-bottom: 8px; min-height: 32px; }
+  .card-name  { font-size: 13px; margin-bottom: 6px; }
+  .card-bio   { font-size: 12px; color: var(--muted); margin-bottom: 10px; min-height: 32px; }
   .card-footer {
     display: flex;
     justify-content: space-between;
@@ -164,6 +176,7 @@
     border-top: 1px solid var(--border);
     padding-top: 8px;
     margin-top: 4px;
+    margin-bottom: 10px;
   }
   .card-followers { font-size: 12px; color: var(--muted); }
   .card-link {
@@ -176,35 +189,48 @@
   }
   .card-link:hover { background: rgba(108,99,255,.15); }
 
-  .selected-check {
-    position: absolute;
-    top: 10px; right: 10px;
-    width: 20px; height: 20px;
-    border-radius: 50%;
-    background: var(--green);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
+  .card-actions {
+    display: flex;
+    gap: 6px;
   }
-  .candidate-card.selected .selected-check { display: flex; }
 
-  .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-
-  .btn {
-    padding: 9px 22px;
-    border-radius: 8px;
-    font-size: 14px;
+  .btn-sm {
+    flex: 1;
+    padding: 7px 4px;
+    border-radius: 7px;
+    font-size: 12px;
     font-weight: 600;
     border: none;
     cursor: pointer;
-    transition: opacity .15s;
+    transition: opacity .15s, filter .15s;
+    text-align: center;
   }
-  .btn:hover { opacity: .85; }
-  .btn:disabled { opacity: .4; cursor: default; }
+  .btn-sm:hover { filter: brightness(1.15); }
+  .btn-sm:disabled { opacity: .35; cursor: default; filter: none; }
 
-  .btn-confirm { background: var(--green);  color: #fff; }
-  .btn-skip    { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .btn-a { background: var(--green);    color: #fff; }
+  .btn-b { background: var(--blue);     color: #fff; }
+  .btn-x { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+  .bottom-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn-skip {
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .btn-skip:hover { color: var(--text); border-color: var(--muted); }
 
   .no-candidates {
     background: var(--surface);
@@ -219,8 +245,6 @@
   .toast {
     position: fixed;
     bottom: 24px; right: 24px;
-    background: var(--green);
-    color: #fff;
     padding: 10px 20px;
     border-radius: 8px;
     font-size: 13px;
@@ -228,7 +252,11 @@
     display: none;
     z-index: 999;
     box-shadow: 0 4px 16px rgba(0,0,0,.4);
+    color: #fff;
   }
+  .toast.green { background: var(--green); }
+  .toast.blue  { background: var(--blue); }
+  .toast.red   { background: var(--red); }
 
   .loading-overlay {
     color: var(--muted);
@@ -267,21 +295,20 @@
 <script>
 let vendors = [];
 let currentVendor = null;
-let selectedHandle = null;
 let doneSet = new Set();
 
 async function loadVendors() {
   const r = await fetch('/api/review/vendors');
   vendors = await r.json();
+  await refreshStats();
+  renderSidebar();
+  if (vendors.length > 0) selectVendor(vendors[0].vendor_name);
+}
 
+async function refreshStats() {
   const stats = await (await fetch('/api/review/stats')).json();
   document.getElementById('progress-text').textContent =
     `${stats.confirmed} confirmados · ${stats.pending} pendentes`;
-
-  renderSidebar();
-  if (vendors.length > 0) {
-    selectVendor(vendors[0].vendor_name);
-  }
 }
 
 function renderSidebar() {
@@ -306,7 +333,6 @@ function renderSidebar() {
 
 async function selectVendor(name) {
   currentVendor = name;
-  selectedHandle = null;
   renderSidebar();
 
   const main = document.getElementById('main-content');
@@ -317,7 +343,7 @@ async function selectVendor(name) {
 
   const vendor = vendors.find(v => v.vendor_name === name);
   const catLabel = { planner: 'Cerimonial', decorator: 'Decoração', venue: 'Local',
-                     buffet: 'Buffet', competitor: 'Concorrente' };
+                     buffet: 'Buffet', competitor: 'Concorrente', photographer: 'Foto/Vídeo' };
 
   let candidateHTML = '';
   if (!candidates.length) {
@@ -331,19 +357,29 @@ async function selectVendor(name) {
         const conf = c.confidence || 0.5;
         const tier = conf >= 0.75 ? 'high' : conf >= 0.45 ? 'mid' : 'low';
         const pct = Math.round(conf * 100);
-        const followers = c.followers ? `${c.followers} seguidores` : '— seguidores';
+        const followers = c.followers ? `${c.followers} seguidores` : '—';
         const bio = c.bio || '<em style="opacity:.5">bio não disponível</em>';
         const displayName = c.display_name || c.handle;
-        return `<div class="candidate-card ${tier}" id="card-${esc(c.handle)}"
-                     onclick="selectCard('${esc(c.handle)}')">
+        const h = esc(c.handle);
+        return `<div class="candidate-card ${tier}" id="card-${h}">
           <div class="confidence-bar"><div class="confidence-fill" style="width:${pct}%"></div></div>
-          <div class="selected-check">✓</div>
           <div class="card-handle">${c.handle}</div>
           <div class="card-name">${displayName}</div>
           <div class="card-bio">${bio}</div>
           <div class="card-footer">
             <span class="card-followers">${followers}</span>
             <a class="card-link" href="${c.profile_url}" target="_blank">Ver perfil →</a>
+          </div>
+          <div class="card-actions">
+            <button class="btn-sm btn-a" onclick="doAction('${h}','confirm_a')" title="Adicionar como conta principal (Tier A)">
+              ★ Principal
+            </button>
+            <button class="btn-sm btn-b" onclick="doAction('${h}','confirm_b')" title="Adicionar como conta secundária (Tier B)">
+              ○ Secundário
+            </button>
+            <button class="btn-sm btn-x" onclick="doAction('${h}','discard')" title="Descartar este candidato">
+              ✕
+            </button>
           </div>
         </div>`;
       }).join('') +
@@ -355,64 +391,82 @@ async function selectVendor(name) {
       <h2>${name}</h2>
       <span class="category-badge">${catLabel[vendor?.vendor_category] || vendor?.vendor_category || ''}</span>
     </div>
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot" style="background:var(--green)"></span> Principal (A) — conta oficial monitorada</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--blue)"></span> Secundário (B) — monitorado com prioridade menor</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--border)"></span> ✕ Descartar — não é este fornecedor</span>
+    </div>
     ${candidateHTML}
-    <div class="actions">
-      <button class="btn btn-confirm" id="btn-confirm" onclick="confirm()" disabled>
-        Confirmar perfil selecionado
-      </button>
-      <button class="btn btn-skip" onclick="skip()">
-        Nenhum é correto — pular
-      </button>
+    <div class="bottom-actions">
+      <button class="btn-skip" onclick="skipAll()">Nenhum é correto — pular todos</button>
     </div>
   `;
 }
 
-function selectCard(handle) {
-  selectedHandle = handle;
-  document.querySelectorAll('.candidate-card').forEach(el => el.classList.remove('selected'));
+async function doAction(handle, action) {
+  if (!currentVendor) return;
+
   const card = document.getElementById('card-' + handle);
-  if (card) card.classList.add('selected');
-  document.getElementById('btn-confirm').disabled = false;
-}
+  const btns = card.querySelectorAll('.btn-sm');
+  btns.forEach(b => b.disabled = true);
 
-async function confirm() {
-  if (!selectedHandle || !currentVendor) return;
-  const btn = document.getElementById('btn-confirm');
-  btn.disabled = true;
-  btn.textContent = 'Salvando…';
-
-  const r = await fetch('/api/review/confirm', {
+  const r = await fetch('/api/review/action', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({vendor_name: currentVendor, handle: selectedHandle})
+    body: JSON.stringify({ vendor_name: currentVendor, handle, action })
   });
 
-  if (r.ok) {
-    showToast(`✓ ${selectedHandle} salvo para ${currentVendor}`);
+  if (!r.ok) { btns.forEach(b => b.disabled = false); return; }
+
+  if (action === 'confirm_a') {
+    card.classList.add('done-a');
+    showToast(`★ ${handle} → Principal (A)`, 'green');
+    // confirm_a rejects all others — move vendor out of pending list
     doneSet.add(currentVendor);
     vendors = vendors.filter(v => v.vendor_name !== currentVendor);
     renderSidebar();
+    await refreshStats();
     if (vendors.length > 0) {
       selectVendor(vendors[0].vendor_name);
     } else {
       document.getElementById('main-content').innerHTML =
         '<div class="empty-state">Todos os fornecedores foram revisados! 🎉<p>Novos candidatos aparecerão aqui após rodar discover.py.</p></div>';
     }
-    // Update stats
-    const stats = await (await fetch('/api/review/stats')).json();
-    document.getElementById('progress-text').textContent =
-      `${stats.confirmed} confirmados · ${stats.pending} pendentes`;
+  } else if (action === 'confirm_b') {
+    card.classList.add('done-b');
+    showToast(`○ ${handle} → Secundário (B)`, 'blue');
+    await refreshStats();
+    // keep current vendor in list (other candidates still pending)
+    // update candidate count displayed
+    const vendorItem = vendors.find(v => v.vendor_name === currentVendor);
+    if (vendorItem && vendorItem.candidate_count > 1) {
+      vendorItem.candidate_count--;
+    }
+    renderSidebar();
+  } else if (action === 'discard') {
+    card.classList.add('done-x');
+    showToast(`✕ ${handle} descartado`, 'red');
+    // check if any pending cards remain
+    const allCards = document.querySelectorAll('.candidate-card');
+    const anyPending = [...allCards].some(c => !c.classList.contains('done-a') && !c.classList.contains('done-b') && !c.classList.contains('done-x'));
+    if (!anyPending) {
+      // all dealt with — move on
+      doneSet.add(currentVendor);
+      vendors = vendors.filter(v => v.vendor_name !== currentVendor);
+      renderSidebar();
+      if (vendors.length > 0) selectVendor(vendors[0].vendor_name);
+    }
   }
 }
 
-async function skip() {
+async function skipAll() {
   if (!currentVendor) return;
   await fetch('/api/review/skip', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({vendor_name: currentVendor})
+    body: JSON.stringify({ vendor_name: currentVendor })
   });
-  showToast(`Pulado: ${currentVendor}`);
+  showToast(`Pulado: ${currentVendor}`, 'red');
   vendors = vendors.filter(v => v.vendor_name !== currentVendor);
   renderSidebar();
   if (vendors.length > 0) {
@@ -423,15 +477,16 @@ async function skip() {
   }
 }
 
-function showToast(msg) {
+function showToast(msg, color = 'green') {
   const t = document.getElementById('toast');
+  t.className = `toast ${color}`;
   t.textContent = msg;
   t.style.display = 'block';
   setTimeout(() => { t.style.display = 'none'; }, 2500);
 }
 
 function esc(s) {
-  return (s || '').replace(/'/g, "\\'");
+  return (s || '').replace(/['"<>&]/g, c => ({'\'':'&#39;','"':'&quot;','<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
 }
 
 loadVendors();

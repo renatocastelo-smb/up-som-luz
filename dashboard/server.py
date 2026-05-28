@@ -13,8 +13,6 @@ from flask import Flask, jsonify, request, send_from_directory
 sys.path.insert(0, str(Path(__file__).parent.parent))
 import db
 
-VENDORS_FILE = Path(__file__).parent.parent / "vendors.json"
-
 app = Flask(__name__, static_folder=str(Path(__file__).parent))
 
 
@@ -36,12 +34,43 @@ def api_events():
 
 @app.route("/api/vendors")
 def api_vendors():
-    with db.get_conn() as conn:
-        rows = conn.execute(
-            "SELECT id, handle, name, category, platform, active, notes "
-            "FROM vendors ORDER BY category, name"
-        ).fetchall()
-    return jsonify([dict(r) for r in rows])
+    return jsonify(db.get_all_vendors())
+
+
+@app.route("/api/vendors/update", methods=["POST"])
+def api_vendors_update():
+    data = request.get_json()
+    vendor_id = data.get("id")
+    if not vendor_id:
+        return jsonify({"error": "id required"}), 400
+    db.update_vendor(
+        vendor_id=int(vendor_id),
+        name=data.get("name", ""),
+        category=data.get("category", "other"),
+        tier=data.get("tier", "A"),
+        active=bool(data.get("active", True)),
+        notes=data.get("notes", ""),
+    )
+    return jsonify({"ok": True})
+
+
+@app.route("/api/vendors/add", methods=["POST"])
+def api_vendors_add():
+    data = request.get_json()
+    handle = (data.get("handle") or "").strip()
+    name = (data.get("name") or "").strip()
+    if not handle or not name:
+        return jsonify({"error": "handle and name required"}), 400
+    vendor_id = db.upsert_vendor(
+        handle=handle,
+        platform=data.get("platform", "instagram"),
+        category=data.get("category", "other"),
+        name=name,
+        tier=data.get("tier", "A"),
+        active=True,
+        notes=data.get("notes", ""),
+    )
+    return jsonify({"ok": True, "id": vendor_id})
 
 
 @app.route("/api/network")
@@ -78,32 +107,36 @@ def api_review_candidates():
     return jsonify(db.get_candidates_for_vendor(vendor_name))
 
 
-@app.route("/api/review/confirm", methods=["POST"])
-def api_confirm():
+@app.route("/api/review/action", methods=["POST"])
+def api_review_action():
+    """
+    body: { vendor_name, handle, action: confirm_a | confirm_b | discard }
+    confirm_a  → add as principal vendor (A tier), reject remaining candidates
+    confirm_b  → add as secondary vendor (B tier), leave others pending
+    discard    → remove this candidate only
+    """
     data = request.get_json()
     vendor_name = data.get("vendor_name")
     handle = data.get("handle")
-    if not vendor_name or not handle:
-        return jsonify({"error": "vendor_name and handle required"}), 400
+    action = data.get("action")
 
-    category = db.confirm_candidate(vendor_name, handle)
+    if not vendor_name or not handle or action not in ("confirm_a", "confirm_b", "discard"):
+        return jsonify({"error": "vendor_name, handle, and valid action required"}), 400
 
-    # Write to vendors.json
-    vendors = json.loads(VENDORS_FILE.read_text())
-    if not any(v["handle"] == handle for v in vendors):
-        vendors.append({
-            "handle": handle,
-            "platform": "instagram",
-            "category": category,
-            "name": vendor_name,
-            "active": True,
-            "notes": "",
-        })
-        VENDORS_FILE.write_text(json.dumps(vendors, ensure_ascii=False, indent=2))
-        db.upsert_vendor(handle=handle, platform="instagram", category=category,
-                         name=vendor_name, active=True)
+    category = db.action_candidate(vendor_name, handle, action)
 
-    return jsonify({"ok": True, "handle": handle})
+    if action in ("confirm_a", "confirm_b"):
+        tier = "A" if action == "confirm_a" else "B"
+        db.upsert_vendor(
+            handle=handle,
+            platform="instagram",
+            category=category,
+            name=vendor_name,
+            tier=tier,
+            active=True,
+        )
+
+    return jsonify({"ok": True, "handle": handle, "action": action})
 
 
 @app.route("/api/review/skip", methods=["POST"])
@@ -123,19 +156,7 @@ def api_review_stats():
 
 @app.route("/api/calendar")
 def api_calendar():
-    """Return event counts grouped by week for the heatmap."""
-    with db.get_conn() as conn:
-        rows = conn.execute("""
-            SELECT strftime('%Y-W%W', event_date) AS week,
-                   event_type,
-                   COUNT(*) AS cnt
-            FROM events
-            WHERE event_date IS NOT NULL
-            GROUP BY week, event_type
-            ORDER BY week DESC
-            LIMIT 200
-        """).fetchall()
-    return jsonify([dict(r) for r in rows])
+    return jsonify(db.get_calendar_data())
 
 
 if __name__ == "__main__":
