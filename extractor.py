@@ -3,6 +3,7 @@ Claude-powered extractor: reads unprocessed posts from the DB,
 sends captions to claude-haiku-4-5, and saves structured event data.
 Run: python extractor.py [--limit N]
 """
+from __future__ import annotations
 
 import os
 import sys

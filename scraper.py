@@ -3,6 +3,7 @@ Instagram scraper using instaloader.
 Fetches recent posts from each vendor in vendors.json and saves to raw_posts/.
 Run: python scraper.py [--limit N] [--handle @someone]
 """
+from __future__ import annotations
 
 import os
 import sys

@@ -2,6 +2,7 @@
 Daily orchestrator: scrape → extract → cross-reference → log summary.
 Run: python run_daily.py
 """
+from __future__ import annotations
 
 import json
 import logging

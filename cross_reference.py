@@ -4,6 +4,8 @@ the same real-world event (same venue + date within ±3 days).
 Run: python cross_reference.py
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import date
 
