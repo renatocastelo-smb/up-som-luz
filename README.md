@@ -52,6 +52,9 @@ Para maior confiabilidade, crie uma **conta dedicada** só para monitoramento (n
 
 ## Rodar manualmente
 
+> ⚠️ **Scraper indisponível** — `scraper.py` está bloqueado por uma mudança
+> da API do Instagram (instaloader). Veja [docs/scraper-known-issue.md](docs/scraper-known-issue.md).
+
 ```bash
 # Apenas scraping (busca posts novos)
 python scraper.py
